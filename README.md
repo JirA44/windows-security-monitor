@@ -7,6 +7,47 @@
 > Lightweight, zero-dependency Windows security monitoring toolkit.
 > No cloud. No API key. Runs locally in minutes.
 
+## Install (one line)
+
+```powershell
+irm https://raw.githubusercontent.com/JirA44/windows-security-monitor/main/install.ps1 | iex
+```
+
+> Installs to `~\WinDefend\`, initializes baselines, creates scheduled tasks automatically.
+
+---
+
+## Preview
+
+```
+  WinDefend Toolkit — Installer
+  ================================
+
+[1/4] Install directory: C:\Users\you\WinDefend
+      Downloaded: install_tracker.ps1
+      Downloaded: watchdog_pc.ps1
+      Downloaded: check_threats.ps1
+[2/4] Scripts downloaded
+[3/4] Baselines initialized
+      [OK] Baseline: 312 software entries recorded
+      [OK] Baseline saved: 183 processes, 3 startup entries
+[4/4] Scheduled tasks created (every 6h + at login)
+
+  Done! WinDefend is active.
+```
+
+```
+=== SECURITY CHECK 2026-03-14 08:00 ===
+[INSTALLS]
+  [NEW] SuspiciousApp v1.0 (Unknown Publisher)        ← alert!
+  [OK] No removals detected
+[SUSPICIOUS PROCESSES]
+  [ALERT] PID=4821 xmrig.exe                          ← cryptominer detected!
+[NEW PROCESSES]
+  [OK] No new unknown processes
+=== END ===
+```
+
 ---
 
 ## What it does
