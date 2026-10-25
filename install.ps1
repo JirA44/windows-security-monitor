@@ -52,7 +52,8 @@ Register-ScheduledTask -TaskName "WinDefend\Watchdog" -Action $action2 -Trigger 
 
 $action3 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$INSTALL_DIR\daily_security_campaign.ps1`""
 $trigger3 = New-ScheduledTaskTrigger -Daily -At 3:17AM
-Register-ScheduledTask -TaskName "WinDefend\DailySecurityCampaign" -Action $action3 -Trigger $trigger3 @taskParams | Out-Null
+$campaignSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+Register-ScheduledTask -TaskName "WinDefend\DailySecurityCampaign" -Action $action3 -Trigger $trigger3 -Settings $campaignSettings @taskParams | Out-Null
 Write-Host "[5/5] Scheduled tasks created (tracker every 6h, watchdog at login, campaign daily at 03:17)" -ForegroundColor Green
 
 Write-Host ""
