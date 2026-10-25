@@ -24,10 +24,37 @@ foreach ($ch in ($day + '|WinDefend-Daily-Campaign').ToCharArray()) { $seed = ((
 $random = [System.Random]::new([int]$seed)
 $catalog = @('suspicious_process','new_startup','auth_anomaly','api_abuse','secret_exposure','defender_confirmed','integrity_tamper','exfiltration','log_tamper')
 $confidenceCatalog = @('low','medium','high')
-$novelCount = 1 + $random.Next(1, 4)
+$reportPath = Join-Path $OutputDirectory ('campaign-' + (Get-Date -Format 'yyyyMMdd') + '.json')
+New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
+$knownSignatures = @{}
+Get-ChildItem -LiteralPath $OutputDirectory -Filter 'campaign-*.json' -ErrorAction SilentlyContinue | Where-Object { $_.FullName -ne $reportPath } | ForEach-Object {
+    try {
+        $oldReport = Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json
+        $signatureParts = @($oldReport.novel_scenario.signals | ForEach-Object { "$($_.category):$($_.confidence)" } | Sort-Object)
+        if ($signatureParts.Count -gt 0) { $knownSignatures[$signatureParts -join '|'] = $true }
+    } catch { }
+}
+
+# Reuse today's scenario on reruns; on a new day, select a deterministic scenario not in prior reports.
 $novelSignals = @()
-for ($i = 0; $i -lt $novelCount; $i++) {
-    $novelSignals += @{ category = $catalog[$random.Next(0, $catalog.Count)]; confidence = $confidenceCatalog[$random.Next(0, $confidenceCatalog.Count)] }
+if (Test-Path -LiteralPath $reportPath) {
+    try {
+        $todayReport = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
+        if ([int]$todayReport.seed -eq [int]$seed) { $novelSignals = @($todayReport.novel_scenario.signals) }
+    } catch { }
+}
+if ($novelSignals.Count -eq 0) {
+    for ($attempt = 0; $attempt -lt 100 -and $novelSignals.Count -eq 0; $attempt++) {
+        $candidate = @()
+        $novelCount = 1 + $random.Next(1, 4)
+        for ($i = 0; $i -lt $novelCount; $i++) {
+            $candidate += @{ category = $catalog[$random.Next(0, $catalog.Count)]; confidence = $confidenceCatalog[$random.Next(0, $confidenceCatalog.Count)] }
+        }
+        $signatureParts = @($candidate | ForEach-Object { "$($_.category):$($_.confidence)" } | Sort-Object)
+        $signature = $signatureParts -join '|'
+        if (-not $knownSignatures.ContainsKey($signature)) { $novelSignals = $candidate }
+    }
+    if ($novelSignals.Count -eq 0) { throw 'Could not generate a new daily scenario; campaign marked incomplete.' }
 }
 $novelDecision = Get-ResponseDecision -Signals $novelSignals
 
@@ -53,12 +80,10 @@ $report = [pscustomobject]@{
     mode = 'simulation_only_no_live_response'
     seed = $seed
     fixed_checks = $checks
-    novel_scenario = [pscustomobject]@{ signals = $novelSignals; expected_replay_seed = $seed; resulting_level = $novelDecision.level }
+    novel_scenario = [pscustomobject]@{ signals = $novelSignals; expected_replay_seed = $seed; unique_against_prior_reports = $true; resulting_level = $novelDecision.level }
     stress = [pscustomobject]@{ synthetic_cases = $fuzzCases; errors = $errors; elapsed_seconds = [Math]::Round($watch.Elapsed.TotalSeconds, 3); time_budget_seconds = 60 }
     result = if ($passed) { 'PASS' } else { 'FAIL' }
 }
-New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
-$reportPath = Join-Path $OutputDirectory ('campaign-' + (Get-Date -Format 'yyyyMMdd') + '.json')
 $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $reportPath
 $report | ConvertTo-Json -Depth 8
 if (-not $passed) { exit 1 }
