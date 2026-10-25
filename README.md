@@ -23,6 +23,12 @@ Il aide à repérer des changements inhabituels par rapport à un état de réf�
 
 L’installation indiquée crée des baselines et des tâches planifiées. Lire et vérifier les scripts avant de les exécuter, puis examiner toute alerte manuellement.
 
+### Campagne quotidienne dans cette branche
+
+L’installateur proposé lance d’abord les tests de la politique, puis une campagne locale simulée : six cas fixes, un scénario quotidien inédit reproductible par sa graine et 5 000 séquences synthétiques pour éprouver le moteur de décision. Il enregistre un rapport JSON dans `reports/` et programme une tâche quotidienne à 03:17, relancée au prochain démarrage si l’ordinateur était éteint.
+
+Cette campagne teste uniquement la logique de décision de WinDefend. Elle ne teste pas les applications réelles, n’envoie aucun trafic d’attaque, ne coupe pas le réseau et ne réalise pas de confinement automatique. La réaction en production reste à intégrer après validation des détecteurs et de la restauration.
+
 ## Install (one line)
 
 ```powershell
@@ -73,6 +79,7 @@ irm https://raw.githubusercontent.com/JirA44/windows-security-monitor/main/insta
 | `install_tracker.ps1` | New software installs, known malicious processes, new unknown processes |
 | `watchdog_pc.ps1` | New processes vs baseline, new startup entries, new Run registry keys |
 | `check_threats.ps1` | Full audit: processes, scheduled tasks, startup folder, temp scripts, network connections |
+| `response_policy.ps1` / `daily_security_campaign.ps1` | Advisory severity policy and daily in-memory campaign (fixed checks + one seeded novel case + 5,000 synthetic decisions); no live containment |
 | `scan-pc.sh` | Open ports, listening services, npm vulnerabilities |
 | `scan-api.sh` | Deep scan of a local REST API: Nuclei + Semgrep + OWASP ZAP |
 | `scan-webapp.sh` | Deep scan of a production web app: Nuclei + Semgrep |
