@@ -23,15 +23,41 @@ Les signaux doivent être évalués par confiance, impact, privilège concerné,
 
 Les règles exactes doivent être explicites, versionnées et testées. Les décisions automatiques doivent indiquer leurs signaux, leur score, la règle appliquée, l’action, l’heure et la méthode de retour arrière. Une absence de télémétrie, un journal corrompu ou une horloge incohérente doit dégrader la confiance et conduire à une posture sûre, pas à une conclusion « aucun incident ».
 
+## Baselines comportementales de toutes les entités
+
+Le comportement attendu doit être établi séparément pour chaque entité : utilisateur, compte de service, agent IA, processus, API, connecteur, bot, venue, file de tâches, base de données, sauvegarde, pipeline de build et composant de contrôle. Le profil tient compte du rôle, du composant, de l’opération, du volume, de la séquence, de l’heure et du contexte technique pertinent.
+
+Toute déviation inexpliquée devient immédiatement un signal suspect, même seule : conserver les preuves, augmenter l’échantillonnage, vérifier l’entité et limiter uniquement l’opération sensible concernée. Une anomalie d’agent peut mettre en pause ses actions d’écriture tandis que ses fonctions de lecture restent disponibles. Une anomalie utilisateur peut demander une vérification renforcée. La déviation seule ne coupe pas tout le système ; des signaux indépendants, une compromission confirmée ou une altération critique font monter le niveau.
+
+Protéger les baselines contre l’empoisonnement : ne pas apprendre d’une période suspecte, d’une session non vérifiée ou d’un incident ; conserver les versions, contrôler les mises à jour lentes et détecter les changements progressifs qui cherchent à déplacer la normale. En l’absence d’historique fiable, signaler le démarrage à froid et appliquer des limites prudentes. Minimiser les données stockées ; ne conserver ni secrets ni contenu privé qui n’est pas nécessaire à l’analyse.
+
 ## Coupe-circuit et retour arrière
 
 - Prévoir des coupe-circuits distincts par service, compte, réseau et machine afin de limiter le rayon d’impact.
 - Le niveau critique doit pouvoir couper temporairement l’accès ou les opérations risquées lorsque l’intégrité est douteuse.
 - Toute coupure automatique doit être idempotente, journalisée et assortie d’une durée maximale ou d’une procédure de réévaluation.
 - Le retour en ligne doit exiger des contrôles d’intégrité réussis et une version connue comme saine. Une simple expiration du délai ne prouve pas que la menace a disparu.
+- La reprise peut être automatique, mais seulement après résolution de la cause, correction vérifiée, intégrité confirmée, absence de signal actif, au moins trois contrôles de santé consécutifs réussis et quinze minutes de période propre. Si des identifiants ont été compromis, leur rotation doit être confirmée.
+- Réactiver uniquement le composant suspendu. Si un signal réapparaît pendant la reprise, le remettre immédiatement en pause. Ces seuils sont des paramètres initiaux à calibrer par système et à tester avec des incidents simulés.
 - Garder une voie de récupération séparée et protégée. Le compte ou processus compromis ne doit pas pouvoir annuler son propre confinement ni supprimer les copies de sauvegarde.
 - Ne jamais supprimer, écraser ou déplacer automatiquement des données en réponse à un signal incertain. Préserver les preuves et préférer l’isolation réversible.
 - Les clés de trading, retraits et transferts de fonds doivent être désactivés ou révoqués selon une règle préétablie ; le moteur de réaction ne doit jamais initier de transfert de fonds.
+
+## Scénarios de pire cas
+
+La liste est un registre vivant, pas une promesse de couvrir chaque attaque imaginable. Chaque système doit cartographier ses actifs, frontières de confiance, dépendances et chemins de récupération, puis tester les combinaisons qui peuvent causer la plus grande perte.
+
+- **Agents et essaims** : plusieurs agents coordonnent des requêtes, varient leur rythme, utilisent des instructions hostiles dans un dépôt, un ticket ou un journal, enchaînent des outils, puis tentent d’élargir leurs permissions ou de faire sortir des données.
+- **Identités et isolation** : jeton volé/rejoué, compte administrateur compromis, escalade de privilèges, accès inter-utilisateur, compte de service détourné, usurpation d’un agent ou d’un connecteur.
+- **Contrôle et détection** : surveillance arrêtée, règles modifiées, horloge décalée, journaux supprimés ou saturés, télémétrie retardée, coupe-circuit bloqué, canal de récupération perdu.
+- **Propagation et dépendances** : paquet ou mise à jour compromise, pipeline de build détourné, jeton CI volé, artefact modifié, dépôt ou branche de référence compromis.
+- **Données et sauvegardes** : exfiltration suivie d’effacement/chiffrement, sauvegarde en ligne détruite avec les données, manifeste falsifié, restauration contaminée, espace disque épuisé pendant la sauvegarde.
+- **Défaillance de la réponse** : faux positif qui coupe le mauvais composant, actions de confinement en boucle, pause trop large, reprise avant correction, redémarrage qui enlève le confinement, incident qui revient juste après la reprise.
+- **Pannes simultanées** : partition réseau/DNS, fournisseur indisponible, file saturée, événements dupliqués ou désordonnés, concurrence et courses d’état, panne de l’hôte pendant la remédiation.
+- **Risque financier** : bot ou venue anormale, API de marché corrompue, clé de trading exposée, ordres qui se multiplient pendant une panne. Les campagnes restent en simulation ; aucune transaction réelle n’est permise.
+- **Attaque sur l’intégrité de la campagne** : générateur de tests falsifié, graine ou historique modifié, rapport tronqué, tâche planifiée désactivée ou exécution annoncée alors qu’elle n’a pas eu lieu.
+
+Combiner les scénarios par tests de propriétés et combinaisons pair-à-pair bornées, puis conserver les graines et les résultats. Les pires chaînes doivent inclure la défaillance simultanée du système surveillé, du moniteur et d’un mécanisme de récupération.
 
 ## Campagnes quotidiennes de stress et de sécurité
 
