@@ -69,10 +69,10 @@ function Get-ResponseDecision {
 
     if ($behaviorDeviation) {
         $actions += @('verify_entity_context', 'limit_affected_operation')
-        if (@($normalized | Where-Object { $_.category -eq 'behavior_anomaly' -and $_.entity_type -eq 'user' }).Count -gt 0) {
+        if (@($normalized | Where-Object { $_.category -in @('behavior_anomaly','agent_prompt_injection') -and $_.entity_type -eq 'user' }).Count -gt 0) {
             $actions += 'step_up_identity_verification'
         }
-        if (@($normalized | Where-Object { $_.category -eq 'behavior_anomaly' -and $_.entity_type -in @('service','service_account','agent','process','api','connector','bot','venue') }).Count -gt 0) {
+        if (@($normalized | Where-Object { $_.category -in @('behavior_anomaly','agent_prompt_injection') -and $_.entity_type -in @('service','service_account','agent','process','api','connector','bot','venue') }).Count -gt 0) {
             $actions += 'pause_sensitive_automation'
         }
         $actions = @($actions | Select-Object -Unique)
