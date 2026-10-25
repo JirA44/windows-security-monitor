@@ -17,9 +17,9 @@ Les signaux doivent être évalués par confiance, impact, privilège concerné,
 | Niveau | Critères indicatifs | Réponse automatique |
 |---|---|---|
 | 0 — normal | Pas de signal pertinent | Continuer la surveillance et les contrôles |
-| 1 — suspect | Anomalie isolée, faible confiance ou portée limitée | Capturer les preuves, ralentir ou limiter la fonction identifiée, augmenter temporairement la fréquence des contrôles |
-| 2 — élevé | Plusieurs signaux indépendants, identité ou processus potentiellement compromis | Révoquer uniquement les identifiants concernés, isoler le compte ou le service atteint, bloquer la source selon une règle réversible |
-| 3 — critique | Compromission probable d’un administrateur, altération active, exfiltration crédible, ou intégrité impossible à établir | Déclencher le coupe-circuit du système ou du segment touché ; suspendre les opérations qui peuvent aggraver les pertes ; conserver les preuves |
+| 1 — suspect | Déviation inhabituelle d’un utilisateur ou d’un composant, faible confiance ou portée limitée | Capturer les preuves, ralentir ou limiter la fonction identifiée, augmenter temporairement la fréquence des contrôles |
+| 2 — élevé | Plusieurs signaux indépendants, ou identité, agent, processus, API, connecteur ou automatisation potentiellement compromis | Révoquer uniquement les identifiants concernés, isoler le compte ou le service atteint, bloquer la source selon une règle réversible |
+| 3 — critique | Compromission probable du contrôle, du moniteur, d’une sauvegarde, d’une chaîne d’approvisionnement, altération active, exfiltration crédible ou intégrité impossible à établir | Déclencher le coupe-circuit du système ou du segment touché ; suspendre les opérations qui peuvent aggraver les pertes ; conserver les preuves |
 
 Les règles exactes doivent être explicites, versionnées et testées. Les décisions automatiques doivent indiquer leurs signaux, leur score, la règle appliquée, l’action, l’heure et la méthode de retour arrière. Une absence de télémétrie, un journal corrompu ou une horloge incohérente doit dégrader la confiance et conduire à une posture sûre, pas à une conclusion « aucun incident ».
 
