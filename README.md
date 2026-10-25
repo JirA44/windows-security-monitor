@@ -7,6 +7,22 @@
 > Lightweight, zero-dependency Windows security monitoring toolkit.
 > No cloud. No API key. Runs locally in minutes.
 
+## Français — présentation
+
+WinDefend Toolkit est un ensemble d’outils locaux de surveillance et de vérification pour Windows. Le README décrit le suivi des installations, des processus, des éléments de démarrage et des connexions réseau, ainsi que des scripts d’analyse pour certaines applications.
+
+### À quoi ça sert, et pourquoi ?
+
+Il aide à repérer des changements inhabituels par rapport à un état de référence et à lancer des vérifications ponctuelles. Les alertes sont des éléments à examiner, pas une preuve automatique d’infection.
+
+### Exemples
+
+- Comparer les logiciels installés et les processus courants à l’état de référence.
+- Examiner une nouvelle entrée de démarrage ou une connexion réseau inattendue.
+- Utiliser les scripts d’analyse API/web après avoir vérifié leurs dépendances.
+
+L’installation indiquée crée des baselines et des tâches planifiées. Lire et vérifier les scripts avant de les exécuter, puis examiner toute alerte manuellement.
+
 ## Install (one line)
 
 ```powershell
