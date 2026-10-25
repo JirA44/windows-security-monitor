@@ -27,7 +27,7 @@ L’installation indiquée crée des baselines et des tâches planifiées. Lire 
 
 L’installateur proposé lance d’abord les tests de la politique, puis une campagne locale simulée : neuf cas fixes sur les utilisateurs, agents, composants, sauvegardes et signaux critiques, cinq contrôles de reprise automatique, un scénario quotidien inédit par rapport aux rapports conservés, reproductible par sa graine (les relances du même jour réutilisent le même scénario), et 5 000 séquences synthétiques. Il enregistre un rapport JSON dans `reports/` et programme une tâche quotidienne à 03:17, relancée au prochain démarrage si l’ordinateur était éteint.
 
-Cette campagne teste uniquement la logique de décision de WinDefend. Elle ne teste pas les applications réelles, n’envoie aucun trafic d’attaque, ne coupe pas le réseau et ne réalise pas de confinement automatique. La réaction en production reste à intégrer après validation des détecteurs et de la restauration.
+Cette campagne teste uniquement la logique de décision et les conditions simulées de pause/reprise de WinDefend, y compris les anomalies d’utilisateurs, d’agents et de composants. Elle ne teste pas les applications réelles, n’envoie aucun trafic d’attaque, ne coupe pas le réseau et n’exécute pas réellement la pause ou la reprise. Ces actions restent à intégrer après validation des détecteurs et de la restauration.
 
 ## Install (one line)
 
