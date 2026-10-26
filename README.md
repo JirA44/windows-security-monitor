@@ -25,9 +25,15 @@ L’installation indiquée crée des baselines et des tâches planifiées. Lire 
 
 ### Campagne quotidienne dans cette branche
 
-L’installateur proposé lance d’abord les tests de la politique, puis une campagne locale simulée : neuf cas fixes sur les utilisateurs, agents, composants, sauvegardes et signaux critiques, cinq contrôles de reprise automatique, un scénario quotidien inédit par rapport aux rapports conservés, reproductible par sa graine (les relances du même jour réutilisent le même scénario), et 5 000 séquences synthétiques. Il enregistre un rapport JSON dans `reports/` et programme une tâche quotidienne à 03:17, relancée au prochain démarrage si l’ordinateur était éteint.
+L’installateur proposé lance d’abord les tests de la politique, puis une campagne quotidienne réelle mais contenue :
 
-Cette campagne teste uniquement la logique de décision et les conditions simulées de pause/reprise de WinDefend, y compris les anomalies d’utilisateurs, d’agents et de composants. Elle ne teste pas les applications réelles, n’envoie aucun trafic d’attaque, ne coupe pas le réseau et n’exécute pas réellement la pause ou la reprise. Ces actions restent à intégrer après validation des détecteurs et de la restauration.
+- **Vérifications d’intégration bornées** (`local_integration_checks.ps1`) : dépôt git courant (diff + statut, job limité à 30 s), services pm2 interrogés via node, points de terminaison HTTP locaux, présence des journaux, tâches planifiées attendues. Aucune action modifiante, lecture seule.
+- **Réponse graduée réelle, uniquement en bac à sable** (`adaptive_response.ps1` + `sandbox/sandbox_service.js`, ports locaux 18250/18251) : surveillance → limitation → pause/restauration, exécutées contre un service sandbox local. Garde-fous : jamais d’arrêt par nom de processus (PID + identité ligne de commande uniquement), aucune suppression, journal d’abord, aucune action sur un hôte hors sandbox.
+- **Rapport schema 3** (`daily_security_campaign.ps1`) : environnement, commit, graine quotidienne unique et rejouable, durée, limites, état de restauration, verdict global PASS / FAIL / INCOMPLETE. Inclut 9 cas fixes de décision, 5 contrôles de reprise, 5 000 séquences synthétiques (~52 s), charge HTTP 160 requêtes / 4 connexions et fuzz HTTP seedé (100 itérations) contre le service sandbox.
+- **Tests** (`tests/adaptive_response.tests.ps1`, Pester, 8/8) : faux positifs sans action, doublons idempotents, perte de journal bloquant l’action avec verdict INCOMPLETE, gates après redémarrage, restauration propre, zéro processus orphelin.
+- **Installateur vérifié** (`install.ps1`) : télécharge les nouveaux composants, programme la campagne à 03:17 (limite 15 min) et refuse de déclarer l’installation active si les trois tâches planifiées (`InstallTracker`, `Watchdog`, `DailySecurityCampaign`) n’existent pas réellement.
+
+La campagne enregistre un rapport JSON dans `reports/` et programme une tâche quotidienne à 03:17, relancée au prochain démarrage si l’ordinateur était éteint. Les actions de réponse réelles ne s’exécutent que contre le service sandbox local ; la réponse graduée sur un vrai poste reste à activer après validation des détecteurs et de la restauration sur l’environnement cible.
 
 ## Install (one line)
 
@@ -79,7 +85,9 @@ irm https://raw.githubusercontent.com/JirA44/windows-security-monitor/main/insta
 | `install_tracker.ps1` | New software installs, known malicious processes, new unknown processes |
 | `watchdog_pc.ps1` | New processes vs baseline, new startup entries, new Run registry keys |
 | `check_threats.ps1` | Full audit: processes, scheduled tasks, startup folder, temp scripts, network connections |
-| `response_policy.ps1` / `daily_security_campaign.ps1` | Advisory severity policy and daily in-memory campaign (fixed checks + one seeded novel case + 5,000 synthetic decisions); no live containment |
+| `response_policy.ps1` / `daily_security_campaign.ps1` | Severity policy and daily campaign: integration checks, seeded synthetic decisions (5,000), sandboxed HTTP load/fuzz, schema 3 report (PASS/FAIL/INCOMPLETE) |
+| `local_integration_checks.ps1` | Read-only bounded checks: git repo, pm2 services, local HTTP endpoints, logs, scheduled tasks |
+| `adaptive_response.ps1` + `sandbox/sandbox_service.js` | Graduated real response (monitor → limit → pause → restore) executed only against the local sandbox service; PID+cmdline identity, journal-first, no deletion |
 | `scan-pc.sh` | Open ports, listening services, npm vulnerabilities |
 | `scan-api.sh` | Deep scan of a local REST API: Nuclei + Semgrep + OWASP ZAP |
 | `scan-webapp.sh` | Deep scan of a production web app: Nuclei + Semgrep |
@@ -284,14 +292,20 @@ reports/
 
 ```
 windows-security-monitor/
-├── install_tracker.ps1   # Software + process monitor
-├── watchdog_pc.ps1       # Process + startup baseline watcher
-├── check_threats.ps1     # Full security audit
-├── scan-pc.sh            # Port scan + npm audit
-├── scan-api.sh           # Local API deep scan (Nuclei + Semgrep + ZAP)
-├── scan-webapp.sh        # Production web app scan (Nuclei + Semgrep)
-├── scan-all.sh           # Run all scans in sequence
-└── setup.sh              # One-time setup
+├── install_tracker.ps1           # Software + process monitor
+├── watchdog_pc.ps1               # Process + startup baseline watcher
+├── check_threats.ps1             # Full security audit
+├── daily_security_campaign.ps1   # Daily campaign + schema 3 JSON report
+├── response_policy.ps1           # Severity policy
+├── local_integration_checks.ps1  # Bounded read-only integration checks
+├── adaptive_response.ps1         # Graduated sandboxed response
+├── sandbox/sandbox_service.js    # Local sandbox service (18250/18251)
+├── tests/adaptive_response.tests.ps1  # Pester tests (8)
+├── scan-pc.sh                    # Port scan + npm audit
+├── scan-api.sh                   # Local API deep scan (Nuclei + Semgrep + ZAP)
+├── scan-webapp.sh                # Production web app scan (Nuclei + Semgrep)
+├── scan-all.sh                   # Run all scans in sequence
+└── setup.sh                      # One-time setup
 ```
 
 ---
