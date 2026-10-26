@@ -18,9 +18,12 @@ if (-not (Test-Path $INSTALL_DIR)) {
 Write-Host "[1/4] Install directory: $INSTALL_DIR" -ForegroundColor Green
 
 # Download scripts
-$scripts = @("install_tracker.ps1", "watchdog_pc.ps1", "check_threats.ps1", "response_policy.ps1", "daily_security_campaign.ps1", "test_response_policy.ps1")
+$scripts = @("install_tracker.ps1", "watchdog_pc.ps1", "check_threats.ps1", "response_policy.ps1", "daily_security_campaign.ps1", "test_response_policy.ps1", "components.json", "local_integration_checks.ps1", "adaptive_response.ps1", "sandbox/sandbox_service.js", "tests/adaptive_response.tests.ps1")
 foreach ($s in $scripts) {
-    Invoke-WebRequest -Uri "$REPO/$s" -OutFile "$INSTALL_DIR\$s" -UseBasicParsing
+    $dest = Join-Path $INSTALL_DIR $s
+    $destDir = Split-Path -Parent $dest
+    if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir | Out-Null }
+    Invoke-WebRequest -Uri "$REPO/$s" -OutFile $dest -UseBasicParsing
     Write-Host "      Downloaded: $s" -ForegroundColor Gray
 }
 Write-Host "[2/4] Scripts downloaded" -ForegroundColor Green
@@ -52,9 +55,16 @@ Register-ScheduledTask -TaskName "WinDefend\Watchdog" -Action $action2 -Trigger 
 
 $action3 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$INSTALL_DIR\daily_security_campaign.ps1`""
 $trigger3 = New-ScheduledTaskTrigger -Daily -At 3:17AM
-$campaignSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+$campaignSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
 Register-ScheduledTask -TaskName "WinDefend\DailySecurityCampaign" -Action $action3 -Trigger $trigger3 -Settings $campaignSettings @taskParams | Out-Null
 Write-Host "[5/5] Scheduled tasks created (tracker every 6h, watchdog at login, campaign daily at 03:17)" -ForegroundColor Green
+
+# Verify the planned tasks really exist before claiming the device is protected.
+foreach ($taskName in @("InstallTracker", "Watchdog", "DailySecurityCampaign")) {
+    $task = Get-ScheduledTask -TaskPath "\WinDefend\" -TaskName $taskName -ErrorAction SilentlyContinue
+    if (-not $task) { throw "Scheduled task WinDefend\$taskName was not registered; campaign is NOT active." }
+    Write-Host "      [VERIFIED] WinDefend\$taskName state=$($task.State)" -ForegroundColor Gray
+}
 
 Write-Host ""
 Write-Host "  Done! WinDefend is active." -ForegroundColor Cyan
