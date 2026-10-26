@@ -18,9 +18,12 @@ if (-not (Test-Path $INSTALL_DIR)) {
 Write-Host "[1/4] Install directory: $INSTALL_DIR" -ForegroundColor Green
 
 # Download scripts
-$scripts = @("install_tracker.ps1", "watchdog_pc.ps1", "check_threats.ps1")
+$scripts = @("install_tracker.ps1", "watchdog_pc.ps1", "check_threats.ps1", "response_policy.ps1", "daily_security_campaign.ps1", "test_response_policy.ps1", "components.json", "local_integration_checks.ps1", "adaptive_response.ps1", "sandbox/sandbox_service.js", "tests/adaptive_response.tests.ps1")
 foreach ($s in $scripts) {
-    Invoke-WebRequest -Uri "$REPO/$s" -OutFile "$INSTALL_DIR\$s" -UseBasicParsing
+    $dest = Join-Path $INSTALL_DIR $s
+    $destDir = Split-Path -Parent $dest
+    if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir | Out-Null }
+    Invoke-WebRequest -Uri "$REPO/$s" -OutFile $dest -UseBasicParsing
     Write-Host "      Downloaded: $s" -ForegroundColor Gray
 }
 Write-Host "[2/4] Scripts downloaded" -ForegroundColor Green
@@ -30,6 +33,12 @@ Set-Location $INSTALL_DIR
 powershell -ExecutionPolicy Bypass -File "$INSTALL_DIR\install_tracker.ps1" -Init -BaselineFile "$INSTALL_DIR\install_baseline.json"
 powershell -ExecutionPolicy Bypass -File "$INSTALL_DIR\watchdog_pc.ps1" -Init -BaselineFile "$INSTALL_DIR\baseline.json"
 Write-Host "[3/4] Baselines initialized" -ForegroundColor Green
+
+# Run policy checks and a bounded in-memory simulation before scheduling the campaign.
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTALL_DIR\test_response_policy.ps1"
+if ($LASTEXITCODE -ne 0) { throw "Response-policy self-tests failed; daily campaign was not installed." }
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTALL_DIR\daily_security_campaign.ps1"
+if ($LASTEXITCODE -ne 0) { throw "Initial simulated campaign failed; daily task was not installed." }
 
 # Create scheduled tasks
 $taskParams = @{
@@ -43,7 +52,19 @@ Register-ScheduledTask -TaskName "WinDefend\InstallTracker" -Action $action1 -Tr
 $action2 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$INSTALL_DIR\watchdog_pc.ps1`" -Check -BaselineFile `"$INSTALL_DIR\baseline.json`""
 $trigger2 = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "WinDefend\Watchdog" -Action $action2 -Trigger $trigger2 @taskParams | Out-Null
-Write-Host "[4/4] Scheduled tasks created (every 6h + at login)" -ForegroundColor Green
+
+$action3 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$INSTALL_DIR\daily_security_campaign.ps1`""
+$trigger3 = New-ScheduledTaskTrigger -Daily -At 3:17AM
+$campaignSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+Register-ScheduledTask -TaskName "WinDefend\DailySecurityCampaign" -Action $action3 -Trigger $trigger3 -Settings $campaignSettings @taskParams | Out-Null
+Write-Host "[5/5] Scheduled tasks created (tracker every 6h, watchdog at login, campaign daily at 03:17)" -ForegroundColor Green
+
+# Verify the planned tasks really exist before claiming the device is protected.
+foreach ($taskName in @("InstallTracker", "Watchdog", "DailySecurityCampaign")) {
+    $task = Get-ScheduledTask -TaskPath "\WinDefend\" -TaskName $taskName -ErrorAction SilentlyContinue
+    if (-not $task) { throw "Scheduled task WinDefend\$taskName was not registered; campaign is NOT active." }
+    Write-Host "      [VERIFIED] WinDefend\$taskName state=$($task.State)" -ForegroundColor Gray
+}
 
 Write-Host ""
 Write-Host "  Done! WinDefend is active." -ForegroundColor Cyan
