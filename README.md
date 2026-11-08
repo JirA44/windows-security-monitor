@@ -303,3 +303,8 @@ MIT
 - [Synthetic examples](./agent-swarm-guard/examples/)
 
 Use it in shadow mode first and tune thresholds against your own service baseline. This alpha is a correlation aid, not a replacement for an IDS/SIEM or incident response process.
+
+
+Practical integration and incident handling:
+- [Instrument a Python agent's server-side tool authorization hook](./agent-swarm-guard/integration/README.md)
+- [Human triage and containment playbook](./agent-swarm-guard/RESPONSE-PLAYBOOK.md)
