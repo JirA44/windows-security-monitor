@@ -1,0 +1,33 @@
+{
+  "country": "FR",
+  "verified_at": "2026-11-08",
+  "notice": "Routing suggestions only. Confirm the organization's sector, territory, status, and the incident facts before reporting.",
+  "routes": {
+    "cyber_assistance": {
+      "name": "17Cyber et CSIRT territorial",
+      "url": "https://17cyber.gouv.fr/",
+      "link_label": "diagnostic et orientation 17Cyber",
+      "when": "Pour diagnostic et orientation des victimes. Les PME, ETI, collectivit�s et associations peuvent aussi contacter leur CSIRT territorial. Choisir le territoire de l'organisation, jamais celui d�duit d'une IP observ�e."
+    },
+    "cert_fr": {
+      "name": "CERT-FR / ANSSI",
+      "url": "https://cert.cyber.gouv.fr/contact/",
+      "link_label": "signalement et p�rim�tre CERT-FR",
+      "email": "cert-fr@ssi.gouv.fr",
+      "when": "Le CERT-FR traite techniquement notamment les incidents concernant l'administration, les OIV et les entit�s essentielles/importantes. Ce n'est pas un service de police ou de d�p�t de plainte. V�rifier le p�rim�tre et le canal officiel avant envoi."
+    },
+    "personal_data_breach": {
+      "name": "CNIL - notification de violation de donn�es",
+      "url": "https://www.cnil.fr/fr/services-en-ligne/notifier-une-violation-de-donnees-personnelles",
+      "link_label": "t�l�service officiel de notification",
+      "when": "� �valuer par le responsable de traitement/DPO si une violation de donn�es personnelles pr�sentant un risque est confirm�e. Les d�lais et l'information des personnes d�pendent de l'�valuation l�gale du risque."
+    },
+    "criminal_complaint": {
+      "name": "Police, gendarmerie ou procureur de la R�publique",
+      "url": "https://www.service-public.fr/particuliers/vosdroits/R11469",
+      "link_label": "informations officielles pour d�poser plainte",
+      "when": "Une plainte formelle rel�ve de la victime ou de son repr�sentant et doit �tre d�pos�e par le canal officiel. Ce rapport ne constitue pas une plainte et ne qualifie pas juridiquement les faits."
+    }
+  }
+}
+
