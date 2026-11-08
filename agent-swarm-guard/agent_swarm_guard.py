@@ -126,7 +126,8 @@ def analyze(events: list[dict[str, Any]], config: dict[str, int]) -> list[dict[s
             alerts.append(_alert("agent_tool_policy_violation", "high", target, violations,
                                   {"disallowed_calls": len(violations), "tool_names": names[:10]},
                                   "Validate the policy decision and agent context; preserve evidence and review tool permissions."))
-        sensitive = [e for e in group if e.get("sensitive") is True]
+        # A denied attempt against a sensitive resource is not evidence that data was read.
+        sensitive = [e for e in group if e.get("sensitive") is True and e["outcome"].lower() == "allowed"]
         bytes_read = sum(e.get("bytes_read", 0) for e in group)
         if len(sensitive) >= config["sensitive_min_events"] or bytes_read >= config["bulk_read_bytes"]:
             alerts.append(_alert("sensitive_or_bulk_read", "high", target, group,
