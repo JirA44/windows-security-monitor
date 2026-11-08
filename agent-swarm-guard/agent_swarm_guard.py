@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import json
+import re
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -57,6 +58,12 @@ def load_events(stream: Any) -> list[dict[str, Any]]:
                 event["_source_ip"] = str(ipaddress.ip_address(event["source_ip"].strip()))
             except ValueError as exc:
                 raise InputError(f"line {line_no}: source_ip must be a valid IPv4 or IPv6 address") from exc
+        if "source_asn" in event and (not isinstance(event["source_asn"], str) or
+                                      not re.fullmatch(r"AS[0-9]{1,10}", event["source_asn"].upper())):
+            raise InputError(f"line {line_no}: source_asn must look like AS12345")
+        if "source_country" in event and (not isinstance(event["source_country"], str) or
+                                          not re.fullmatch(r"[A-Za-z]{2}", event["source_country"])):
+            raise InputError(f"line {line_no}: source_country must be a two-letter code")
         amount = event.get("bytes_read", 0)
         if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
             raise InputError(f"line {line_no}: bytes_read must be a non-negative integer")
@@ -91,14 +98,18 @@ def _alert(rule: str, severity: str, target: str, bucket: list[dict[str, Any]], 
     sessions = sorted({e["session_id"] for e in bucket})
     start = min(e["_time"] for e in bucket)
     end = max(e["_time"] for e in bucket)
-    networks: dict[str, int] = defaultdict(int)
+    networks: dict[str, dict[str, Any]] = defaultdict(lambda: {"events": 0, "asns": set(), "countries": set()})
     for event in bucket:
         source_ip = event.get("_source_ip")
         if source_ip:
             address = ipaddress.ip_address(source_ip)
             prefix = 24 if address.version == 4 else 48
             network = str(ipaddress.ip_network(f"{source_ip}/{prefix}", strict=False))
-            networks[network] += 1
+            networks[network]["events"] += 1
+            if event.get("source_asn"):
+                networks[network]["asns"].add(event["source_asn"].upper())
+            if event.get("source_country"):
+                networks[network]["countries"].add(event["source_country"].upper())
     return {
         "rule": rule,
         "severity": severity,
@@ -108,7 +119,9 @@ def _alert(rule: str, severity: str, target: str, bucket: list[dict[str, Any]], 
         "evidence": evidence,
         "actor_count": len(actors),
         "session_count": len(sessions),
-        "source_networks": [{"network": network, "events": count} for network, count in sorted(networks.items())],
+        "source_networks": [{"network": network, "events": details["events"],
+                             "asns": sorted(details["asns"]), "countries": sorted(details["countries"])}
+                            for network, details in sorted(networks.items())],
         "sample_actor_ids": actors[:5],
         "sample_session_ids": sessions[:5],
         "recommendation": recommendation,
