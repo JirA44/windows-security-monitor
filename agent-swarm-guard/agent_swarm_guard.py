@@ -111,14 +111,17 @@ def analyze(events: list[dict[str, Any]], config: dict[str, int]) -> list[dict[s
         actors = {e["actor_id"] for e in group}
         sessions = {e["session_id"] for e in group}
         failures = [e for e in group if e["outcome"].lower() in FAILURES]
-        ratio = round(100 * len(failures) / len(group))
+        # Compare exact integer ratios; round only the display value to avoid false positives.
+        ratio_percent = round(100 * len(failures) / len(group))
+        ratio_meets_threshold = len(failures) * 100 >= config["failure_min_ratio_percent"] * len(group)
         if len(group) >= config["burst_min_events"] and len(actors) >= config["burst_min_actors"]:
             alerts.append(_alert("distributed_burst", "high", target, group,
                                   {"events": len(group), "distinct_actors": len(actors), "distinct_sessions": len(sessions)},
                                   "Review correlated identities and change windows; consider targeted throttling only after validation."))
-        if len(group) >= config["failure_min_events"] and len(failures) >= config["failure_min_count"] and ratio >= config["failure_min_ratio_percent"]:
+        if (len(group) >= config["failure_min_events"] and
+                len(failures) >= config["failure_min_count"] and ratio_meets_threshold):
             alerts.append(_alert("denial_or_enumeration_spike", "medium", target, group,
-                                  {"events": len(group), "denied_failed_not_found": len(failures), "failure_ratio_percent": ratio},
+                                  {"events": len(group), "denied_failed_not_found": len(failures), "failure_ratio_percent": ratio_percent},
                                   "Review authorization and authentication logs; verify whether this is expected discovery or a test."))
         violations = [e for e in group if e.get("tool_allowed") is False]
         if violations:
