@@ -1,0 +1,11 @@
+{
+  "window_seconds": 60,
+  "burst_min_events": 10,
+  "burst_min_actors": 5,
+  "failure_min_events": 10,
+  "failure_min_count": 8,
+  "failure_min_ratio_percent": 60,
+  "sensitive_min_events": 2,
+  "bulk_read_bytes": 10000000
+}
+

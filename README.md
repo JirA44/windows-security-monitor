@@ -292,3 +292,19 @@ windows-security-monitor/
 ## License
 
 MIT
+
+
+## AI agent swarm detection (alpha)
+
+**Agent Swarm Guard** adds local-first correlation for normalized security events from AI agents and the services they use. It highlights coordinated bursts, denial/enumeration spikes, disallowed tool calls, and sensitive or bulk reads. It is observation-only: no network actions, automatic blocks, or credential revocation.
+
+- [Overview, event format, configuration, and integration guidance](./agent-swarm-guard/README.md)
+- [Python CLI](./agent-swarm-guard/agent_swarm_guard.py)
+- [Synthetic examples](./agent-swarm-guard/examples/)
+
+Use it in shadow mode first and tune thresholds against your own service baseline. This alpha is a correlation aid, not a replacement for an IDS/SIEM or incident response process.
+
+
+Practical integration and incident handling:
+- [Instrument a Python agent's server-side tool authorization hook](./agent-swarm-guard/integration/README.md)
+- [Human triage and containment playbook](./agent-swarm-guard/RESPONSE-PLAYBOOK.md)
