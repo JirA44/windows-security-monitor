@@ -68,6 +68,8 @@ Example:
 
 `config.json` contains conservative demonstration thresholds: correlation window, burst size, failure ratio/count, sensitive-read threshold, and bulk-read volume. Configure to service-specific normal traffic. Record the reason for each change and review false-positive/false-negative findings.
 
+Only events marked `sensitive: true` with `outcome: allowed` count toward the sensitive-read rule; denied attempts are reported by the tool-policy rule instead.
+
 The current implementation groups events into fixed UTC windows. Events near a window boundary may land in separate groups; production deployments should consider a streaming window store, late-event handling, retention controls, and a tested baseline per service.
 
 ## Integration pattern
