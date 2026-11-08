@@ -80,6 +80,8 @@ The current implementation groups events into fixed UTC windows. Events near a w
 
 Agent-specific controls that complement detection: tool allowlists, per-agent identities, least privilege, server-side authorization on every tool call, rate and spend limits, and human confirmation for export, deletion, payment, publication, or permission changes. Treat instructions found in retrieved content as untrusted data.
 
+For a working Python authorization-hook example, see [`integration/`](integration/README.md). For the operator's triage and containment sequence, see the [human response playbook](RESPONSE-PLAYBOOK.md).
+
 ## Privacy and operations
 
 - Prefer pseudonymous IDs and data minimization. Keep identity resolution in a separate access-controlled system.
