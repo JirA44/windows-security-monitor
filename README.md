@@ -308,3 +308,6 @@ Use it in shadow mode first and tune thresholds against your own service baselin
 Practical integration and incident handling:
 - [Instrument a Python agent's server-side tool authorization hook](./agent-swarm-guard/integration/README.md)
 - [Human triage and containment playbook](./agent-swarm-guard/RESPONSE-PLAYBOOK.md)
+
+
+Agent Swarm Guard can also create local incident reports with source network indicators and official France reporting routes. See the [reporting guide](./agent-swarm-guard/README.md#incident-report-and-authority-routing) and [official route references](./agent-swarm-guard/SOURCES.md). It creates a reviewed email draft only; it does not submit complaints or automatically send evidence.
