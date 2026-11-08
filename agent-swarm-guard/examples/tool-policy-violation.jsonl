@@ -1,3 +1,3 @@
-{"timestamp":"2026-11-08T09:10:03Z","target":"document-agent","actor_id":"agent-demo","session_id":"session-demo","action":"tool_call","outcome":"denied","tool_name":"bulk_export","tool_allowed":false,"bytes_read":0,"sensitive":false}
-{"timestamp":"2026-11-08T09:10:08Z","target":"document-agent","actor_id":"agent-demo","session_id":"session-demo","action":"tool_call","outcome":"denied","tool_name":"change_permissions","tool_allowed":false,"bytes_read":0,"sensitive":false}
+{"timestamp":"2026-11-08T09:10:03Z","target":"document-agent","actor_id":"agent-demo","session_id":"session-demo","source_ip":"198.51.100.25","action":"tool_call","outcome":"denied","tool_name":"bulk_export","tool_allowed":false,"bytes_read":0,"sensitive":false}
+{"timestamp":"2026-11-08T09:10:08Z","target":"document-agent","actor_id":"agent-demo","session_id":"session-demo","source_ip":"198.51.100.25","action":"tool_call","outcome":"denied","tool_name":"change_permissions","tool_allowed":false,"bytes_read":0,"sensitive":false}
 
