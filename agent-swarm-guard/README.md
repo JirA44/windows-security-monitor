@@ -56,7 +56,7 @@ One JSON object per line. Required fields:
 | `action` | string | Operation name, such as `read`, `tool_call`, `login` |
 | `outcome` | string | Result, such as `allowed`, `denied`, `failed`, `not_found` |
 
-Optional fields: `bytes_read` (non-negative integer), `sensitive` (boolean), `tool_name` (string), `tool_allowed` (boolean), and `source_ip` (IPv4/IPv6 observed by a trusted edge). Unknown fields are ignored. Do not trust client-supplied forwarding headers as source IPs. Do not place credentials, prompts, message bodies, personal data, or raw secrets in event records.
+Optional fields: `bytes_read` (non-negative integer), `sensitive` (boolean), `tool_name` (string), `tool_allowed` (boolean), `source_ip` (IPv4/IPv6 observed by a trusted edge), `source_asn` (such as `AS64500`), and `source_country` (two-letter code supplied by trusted telemetry). ASN/country are reported as observations from the event producer, not independently verified facts. Unknown fields are ignored. Do not trust client-supplied forwarding headers as source IPs. Do not place credentials, prompts, message bodies, personal data, or raw secrets in event records.
 
 Example:
 
@@ -93,9 +93,9 @@ py .\agent_swarm_guard.py .\examples\tool-policy-violation.jsonl --config .\conf
 py .\incident_report.py --events .\examples\tool-policy-violation.jsonl --alerts .\alerts.json --output .\incident-report.md --draft-cert-email
 ```
 
-The optional `.eml` is a **local draft**, addressed using the France routing profile; it is never sent by the tool. Exact source IPs are masked to network prefixes in the report by default. Add `--include-source-ips` only when producing a restricted evidence copy after review. The routing file can nominate 17Cyber/CSIRT, CERT-FR, CNIL assessment, and criminal complaint routes based on detected event types. An alert alone cannot establish that an incident is real, determine the correct regulator, or submit a formal complaint. See [official route sources](SOURCES.md).
+The optional `.eml` is a **local draft** addressed to CERT-FR using the France routing profile; it is never sent by the tool. Exact source IPs are masked to network prefixes in the report by default. Add `--include-source-ips` only when producing a restricted evidence copy after review. ASN/country are included only if supplied by your trusted logging pipeline. The routing file can nominate 17Cyber/CSIRT, CERT-FR, CNIL assessment, and criminal complaint routes based on detected event types. An alert alone cannot establish that an incident is real, determine the correct regulator, or submit a formal complaint. See [official route sources](SOURCES.md).
 
-The demo IP ranges are reserved documentation ranges and do not identify real attackers. No geolocation or attribution is inferred. A source IP is only a network indicator observed by the logging edge, not the identity or physical location of an attacker.
+The demo IP ranges and ASNs are reserved documentation identifiers and do not identify real attackers; the `FR` label is synthetic. No geolocation or attribution is inferred. A source IP is only a network indicator observed by the logging edge, not the identity or physical location of an attacker.
 
 ## Privacy and operations
 
