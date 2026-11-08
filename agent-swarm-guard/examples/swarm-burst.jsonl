@@ -1,5 +1,5 @@
-{"timestamp":"2026-11-08T09:00:01Z","target":"account-export","actor_id":"agent-01","session_id":"s-01","source_ip":"192.0.2.10","action":"read","outcome":"allowed","bytes_read":120}
-{"timestamp":"2026-11-08T09:00:04Z","target":"account-export","actor_id":"agent-02","session_id":"s-02","source_ip":"192.0.2.11","action":"read","outcome":"allowed","bytes_read":120}
+{"timestamp":"2026-11-08T09:00:01Z","target":"account-export","actor_id":"agent-01","session_id":"s-01","source_ip":"192.0.2.10","source_asn":"AS64500","source_country":"FR","action":"read","outcome":"allowed","bytes_read":120}
+{"timestamp":"2026-11-08T09:00:04Z","target":"account-export","actor_id":"agent-02","session_id":"s-02","source_ip":"192.0.2.11","source_asn":"AS64500","source_country":"FR","action":"read","outcome":"allowed","bytes_read":120}
 {"timestamp":"2026-11-08T09:00:07Z","target":"account-export","actor_id":"agent-03","session_id":"s-03","source_ip":"192.0.2.12","action":"read","outcome":"allowed","bytes_read":120}
 {"timestamp":"2026-11-08T09:00:10Z","target":"account-export","actor_id":"agent-04","session_id":"s-04","source_ip":"192.0.2.13","action":"read","outcome":"allowed","bytes_read":120}
 {"timestamp":"2026-11-08T09:00:13Z","target":"account-export","actor_id":"agent-05","session_id":"s-05","source_ip":"192.0.2.14","action":"read","outcome":"allowed","bytes_read":120}
