@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from agent_swarm_guard import InputError, load_events
 
 
@@ -63,7 +64,7 @@ def render(events: list[dict[str, Any]], alerts: list[dict[str, Any]], source_sh
     highest = max((a.get("severity", "unknown") for a in alerts),
                   key=lambda s: severity_order.get(s, 0), default="none")
 
-    source_rows: dict[str, dict[str, Any]] = defaultdict(lambda: {"count": 0, "first": None, "last": None})
+    source_rows: dict[str, dict[str, Any]] = defaultdict(lambda: {"count": 0, "first": None, "last": None, "asns": set(), "countries": set()})
     for event in relevant:
         raw_ip = event.get("_source_ip")
         if not raw_ip:
@@ -79,6 +80,10 @@ def render(events: list[dict[str, Any]], alerts: list[dict[str, Any]], source_sh
         stamp = event["_time"].isoformat().replace("+00:00", "Z")
         row["first"] = min(row["first"], stamp) if row["first"] else stamp
         row["last"] = max(row["last"], stamp) if row["last"] else stamp
+        if event.get("source_asn"):
+            row["asns"].add(event["source_asn"].upper())
+        if event.get("source_country"):
+            row["countries"].add(event["source_country"].upper())
 
     lines = [
         "# Rapport d'incident cyber - Agent Swarm Guard",
@@ -111,10 +116,12 @@ def render(events: list[dict[str, Any]], alerts: list[dict[str, Any]], source_sh
     if source_rows:
         lines.append("Les adresses sont celles consign�es par la source de journaux. V�rifier qu'elles proviennent du pair observ� par une passerelle de confiance, et non d'un en-t�te client non v�rifi�.")
         lines.append("")
-        lines.append("| Indicateur" + (" (restreint)" if include_source_ips else " (pr�fixe masqu�)") + " | �v�nements | Premi�re observation | Derni�re observation |")
-        lines.append("|---|---:|---|---|")
+        lines.append("| Indicateur" + (" (restreint)" if include_source_ips else " (pr�fixe masqu�)") + " | ASN observ� | Pays fourni par la t�l�m�trie | �v�nements | Premi�re observation | Derni�re observation |")
+        lines.append("|---|---|---|---:|---|---|")
         for source, row in sorted(source_rows.items()):
-            lines.append(f"| `{md(source)}` | {row['count']} | `{row['first']}` | `{row['last']}` |")
+            asns = ", ".join(sorted(row["asns"])) or "n/d"
+            countries = ", ".join(sorted(row["countries"])) or "n/d"
+            lines.append(f"| `{md(source)}` | {md(asns)} | {md(countries)} | {row['count']} | `{row['first']}` | `{row['last']}` |")
     else:
         lines.append("Aucun champ `source_ip` valide n'�tait pr�sent dans les �v�nements correspondants.")
     lines.extend(["", "## Chronologie synth�tique", "", "| Horodatage UTC | Cible | Action | R�sultat | Outil |", "|---|---|---|---|---|"])
@@ -128,7 +135,7 @@ def render(events: list[dict[str, Any]], alerts: list[dict[str, Any]], source_sh
         "",
     ])
     routes = routing["routes"]
-    selected = ["cyber_assistance"] if alerts else []
+    selected = ["cyber_assistance", "cert_fr"] if alerts else []
     if any(a.get("rule") == "sensitive_or_bulk_read" for a in alerts):
         selected.append("personal_data_breach")
     if alerts:
