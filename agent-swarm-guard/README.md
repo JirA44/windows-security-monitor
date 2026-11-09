@@ -56,7 +56,7 @@ One JSON object per line. Required fields:
 | `action` | string | Operation name, such as `read`, `tool_call`, `login` |
 | `outcome` | string | Result, such as `allowed`, `denied`, `failed`, `not_found` |
 
-Optional fields: `bytes_read` (non-negative integer), `sensitive` (boolean), `tool_name` (string), `tool_allowed` (boolean). Unknown fields are ignored. Do not place credentials, prompts, message bodies, personal data, or raw secrets in event records.
+Optional fields: `bytes_read` (non-negative integer), `sensitive` (boolean), `tool_name` (string), `tool_allowed` (boolean), `source_ip` (IPv4/IPv6 observed by a trusted edge), `source_asn` (such as `AS64500`), and `source_country` (two-letter code supplied by trusted telemetry). ASN/country are reported as observations from the event producer, not independently verified facts. Unknown fields are ignored. Do not trust client-supplied forwarding headers as source IPs. Do not place credentials, prompts, message bodies, personal data, or raw secrets in event records.
 
 Example:
 
@@ -84,6 +84,19 @@ Agent-specific controls that complement detection: tool allowlists, per-agent id
 
 For a working Python authorization-hook example, see [`integration/`](integration/README.md). For the operator's triage and containment sequence, see the [human response playbook](RESPONSE-PLAYBOOK.md).
 
+## Incident report and authority routing
+
+After running the detector, generate a local report with a timeline, detection evidence, a SHA-256 digest of the source event file, observed source network prefixes, and French official reporting routes:
+
+```powershell
+py .\agent_swarm_guard.py .\examples\tool-policy-violation.jsonl --config .\config.json --output .\alerts.json
+py .\incident_report.py --events .\examples\tool-policy-violation.jsonl --alerts .\alerts.json --output .\incident-report.md --draft-cert-email
+```
+
+The optional `.eml` is a **local draft** addressed to CERT-FR using the France routing profile; it is never sent by the tool. Exact source IPs are masked to network prefixes in the report by default. Add `--include-source-ips` only when producing a restricted evidence copy after review. ASN/country are included only if supplied by your trusted logging pipeline. The routing file can nominate 17Cyber/CSIRT, CERT-FR, CNIL assessment, and criminal complaint routes based on detected event types. An alert alone cannot establish that an incident is real, determine the correct regulator, or submit a formal complaint. See [official route sources](SOURCES.md).
+
+The demo IP ranges and ASNs are reserved documentation identifiers and do not identify real attackers; the `FR` label is synthetic. No geolocation or attribution is inferred. A source IP is only a network indicator observed by the logging edge, not the identity or physical location of an attacker.
+
 ## Privacy and operations
 
 - Prefer pseudonymous IDs and data minimization. Keep identity resolution in a separate access-controlled system.
@@ -104,6 +117,8 @@ For a working Python authorization-hook example, see [`integration/`](integratio
 Agent Swarm Guard est un prototype local qui corr�le des journaux de s�curit� normalis�s pour faire ressortir des comportements coordonn�s d'agents IA : rafales distribu�es, �checs r�p�t�s, appels d'outils interdits et acc�s sensibles ou volumineux. Il explique chaque alerte et propose une v�rification humaine. Il ne bloque rien et n'agit sur aucun r�seau.
 
 Il faut d'abord l'utiliser en observation, adapter les seuils au trafic normal du service et mesurer les faux positifs. Ce prototype ne remplace pas un SIEM, un EDR ni une �quipe de r�ponse � incident.
+
+Le g�n�rateur de rapport ajoute une chronologie, les preuves de d�tection, une empreinte des journaux et les points de contact officiels fran�ais pertinents. Il peut cr�er un brouillon `.eml`, mais ne l'envoie pas. Les plaintes et notifications r�glementaires restent soumises aux d�marches officielles et � une validation par l'organisation.
 
 ## Contributions
 
