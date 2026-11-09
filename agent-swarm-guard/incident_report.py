@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from email.message import EmailMessage
 import hashlib
+import io
 import ipaddress
 import json
 import sys
@@ -172,8 +173,11 @@ def main() -> int:
         event_path = Path(args.events)
         source_bytes = event_path.read_bytes()
         source_sha256 = hashlib.sha256(source_bytes).hexdigest()
-        with event_path.open(encoding="utf-8") as stream:
-            events = load_events(stream)
+        try:
+            source_text = source_bytes.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise InputError("event source must be UTF-8 JSONL") from exc
+        events = load_events(io.StringIO(source_text))
         alerts = read_alerts(Path(args.alerts))
         routing = read_routing(Path(args.routing))
         report = render(events, alerts, source_sha256, args.include_source_ips, routing)
