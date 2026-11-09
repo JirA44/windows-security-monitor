@@ -44,6 +44,8 @@ def load_events(stream: Any) -> list[dict[str, Any]]:
             raise InputError(f"line {line_no}: invalid JSON") from exc
         if not isinstance(event, dict):
             raise InputError(f"line {line_no}: event must be a JSON object")
+        # Internal normalized fields must never be accepted from untrusted JSON input.
+        event.pop("_source_ip", None)
         missing = [key for key in REQUIRED if key not in event]
         if missing:
             raise InputError(f"line {line_no}: missing required field(s): {', '.join(missing)}")
